@@ -30,16 +30,19 @@ func LoadConfig() Config {
 		model = "openai/gpt-oss-20b"
 	}
 
-	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
-	if allowedOrigin == "" {
-		allowedOrigin = "*"
+	corsOrigin := os.Getenv("CORS_ORIGIN")
+	if corsOrigin == "" {
+		corsOrigin = os.Getenv("ALLOWED_ORIGIN")
+	}
+	if corsOrigin == "" {
+		corsOrigin = "*"
 	}
 
 	return Config{
 		Port:          port,
 		GroqAPIKey:    apiKey,
 		GroqModel:     model,
-		AllowedOrigin: allowedOrigin,
+		AllowedOrigin: corsOrigin,
 	}
 }
 

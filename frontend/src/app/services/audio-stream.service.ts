@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -17,7 +18,7 @@ export interface ChatSession {
   providedIn: 'root'
 })
 export class AudioStreamService {
-  private readonly apiUrl = 'http://localhost:8080/api/chat/stream';
+  private readonly apiUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/chat/stream`;
   private readonly storageKey = 'senai_audio_sessions_v1';
   private readonly maxSessions = 10;
 
