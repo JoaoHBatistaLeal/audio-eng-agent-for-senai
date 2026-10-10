@@ -8,9 +8,9 @@ import { AudioStreamService } from '../../services/audio-stream.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="w-full flex flex-col gap-3">
-      <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-[10px] font-black uppercase tracking-wider text-studio-slate-dark shrink-0">
+    <div class="w-full flex flex-col gap-2.5 sm:gap-3">
+      <div class="flex flex-wrap gap-1.5 sm:gap-2 items-center">
+        <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-studio-slate-dark shrink-0">
           ATALHOS RAPIDOS:
         </span>
         @for (suggestion of studioSuggestions; track suggestion) {
@@ -18,15 +18,15 @@ import { AudioStreamService } from '../../services/audio-stream.service';
             type="button"
             (click)="selectSuggestion(suggestion)"
             [disabled]="audioService.isStreaming()"
-            class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-white border border-studio-slate/35 text-studio-slate-deep hover:bg-studio-lilac hover:border-studio-slate-deep active:translate-y-0 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs">
+            class="px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-white border border-studio-slate/35 text-studio-slate-deep hover:bg-studio-lilac hover:border-studio-slate-deep active:translate-y-0 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs">
             {{ suggestion }}
           </button>
         }
       </div>
 
       <form (ngSubmit)="submitPrompt()" class="w-full">
-        <div class="rounded-2xl border-2 border-studio-slate/40 bg-white p-3.5 shadow-sm transition-all duration-200 focus-within:border-studio-slate-deep focus-within:ring-2 focus-within:ring-studio-slate/50">
-          <div class="flex flex-col sm:flex-row gap-3">
+        <div class="rounded-xl sm:rounded-2xl border-2 border-studio-slate/40 bg-white p-2.5 sm:p-3.5 shadow-sm transition-all duration-200 focus-within:border-studio-slate-deep focus-within:ring-2 focus-within:ring-studio-slate/50">
+          <div class="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
             <textarea
               [(ngModel)]="promptText"
               name="prompt"
@@ -34,21 +34,21 @@ import { AudioStreamService } from '../../services/audio-stream.service';
               rows="2"
               [disabled]="audioService.isStreaming()"
               placeholder="Descreva o conflito de frequencias, cadeia de equalizacao ou patch de sintese..."
-              class="flex-1 bg-transparent resize-none border-0 text-sm font-semibold text-studio-slate-deep placeholder-studio-slate-dark/70 focus:outline-none p-2 leading-relaxed disabled:opacity-50">
+              class="flex-1 bg-transparent resize-none border-0 text-xs sm:text-sm font-semibold text-studio-slate-deep placeholder-studio-slate-dark/70 focus:outline-none p-1.5 sm:p-2 leading-relaxed disabled:opacity-50">
             </textarea>
 
-            <div class="flex sm:flex-col justify-end items-end gap-2 shrink-0">
+            <div class="flex justify-end sm:flex-col sm:justify-end items-end gap-2 shrink-0">
               <button
                 type="submit"
                 [disabled]="audioService.isStreaming() || !promptText.trim()"
-                class="px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white bg-studio-slate-deep shadow-md hover:bg-studio-slate-dark active:translate-y-0 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed">
+                class="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white bg-studio-slate-deep shadow-md hover:bg-studio-slate-dark active:translate-y-0 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed">
                 {{ audioService.isStreaming() ? 'PROCESSANDO' : 'TRANSMITIR' }}
               </button>
             </div>
           </div>
 
-          <div class="mt-2.5 pt-2 border-t-2 border-studio-slate/15 flex items-center justify-between text-[11px] font-bold text-studio-slate-deep">
-            <span>Pressione Enter para enviar, Shift+Enter para quebra de linha</span>
+          <div class="mt-2 sm:mt-2.5 pt-2 border-t-2 border-studio-slate/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-[10px] sm:text-[11px] font-bold text-studio-slate-deep">
+            <span>Enter para enviar, Shift+Enter para quebra</span>
             <span class="font-mono font-black">CANAL STREAMING DIRETO</span>
           </div>
         </div>
