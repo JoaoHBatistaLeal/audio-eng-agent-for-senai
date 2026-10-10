@@ -26,7 +26,9 @@ func main() {
 
 	chatMux := http.NewServeMux()
 	chatMux.HandleFunc("POST /api/chat/stream", chatHandler.StreamHandler)
+	chatMux.HandleFunc("POST /api/chat/stream/", chatHandler.StreamHandler)
 	chatMux.HandleFunc("POST /api/v1/chat", chatHandler.StreamHandler)
+	chatMux.HandleFunc("POST /api/v1/chat/", chatHandler.StreamHandler)
 
 	rateLimiter := middleware.NewRateLimiter(10.0, 10.0)
 	rateLimitedChatHandler := middleware.NewRateLimitMiddleware(rateLimiter)(chatMux)

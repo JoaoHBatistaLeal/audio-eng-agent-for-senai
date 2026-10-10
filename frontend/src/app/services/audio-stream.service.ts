@@ -18,7 +18,10 @@ export interface ChatSession {
   providedIn: 'root'
 })
 export class AudioStreamService {
-  private readonly apiUrl = `${environment.apiUrl.replace(/\/+$/, '')}/api/chat/stream`;
+  get apiUrl(): string {
+    const base = environment.apiUrl ? environment.apiUrl.replace(/\/+$/, '') : '';
+    return `${base}/api/chat/stream`;
+  }
   private readonly storageKey = 'senai_audio_sessions_v1';
   private readonly maxSessions = 10;
 

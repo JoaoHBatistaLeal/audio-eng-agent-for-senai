@@ -14,9 +14,9 @@ services:
       - key: GROQ_MODEL
         value: openai/gpt-oss-20b
       - key: CORS_ORIGIN
-        value: https://audio-agent-frontend.onrender.com
+        value: https://audio-agent-frontend-qez7.onrender.com
       - key: ALLOWED_ORIGIN
-        value: https://audio-agent-frontend.onrender.com
+        value: https://audio-agent-frontend-qez7.onrender.com
 
   - type: web
     name: audio-agent-frontend
@@ -26,4 +26,4 @@ services:
     plan: free
     envVars:
       - key: API_URL
-        value: https://audio-agent-backend.onrender.com
+        value: https://audio-agent-backend-0xmq.onrender.com
