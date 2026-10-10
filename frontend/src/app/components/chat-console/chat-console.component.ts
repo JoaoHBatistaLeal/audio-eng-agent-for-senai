@@ -42,7 +42,7 @@ import { MarkdownToHtmlPipe } from '../../pipes/markdown-to-html.pipe';
           <div class="flex flex-col" [ngClass]="msg.role === 'user' ? 'items-end' : 'items-start'">
             <div class="flex items-center gap-2 mb-1 px-1">
               <span class="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider font-black text-studio-slate-deep">
-                [{{ msg.role === 'user' ? 'OPERADOR' : 'CONSULTOR DE AUDIO' }}]
+                [{{ msg.role === 'user' ? 'OPERADOR' : (msg.isRateLimitNotice ? 'SISTEMA DE TELEMETRIA' : 'CONSULTOR DE AUDIO') }}]
               </span>
               <span class="text-[9px] sm:text-[10px] font-mono font-bold text-studio-slate-dark">{{ msg.timestamp }}</span>
             </div>
@@ -50,6 +50,18 @@ import { MarkdownToHtmlPipe } from '../../pipes/markdown-to-html.pipe';
             @if (msg.role === 'user') {
               <div class="max-w-[95%] sm:max-w-[90%] xl:max-w-[85%] rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs whitespace-pre-wrap leading-relaxed text-xs sm:text-sm transition-all duration-200 bg-studio-slate-deep text-white rounded-br-none border-2 border-studio-slate-deep font-medium">
                 {{ msg.content }}
+              </div>
+            } @else if (msg.isRateLimitNotice) {
+              <div class="max-w-[98%] sm:max-w-[95%] xl:max-w-[92%] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xs leading-relaxed text-xs sm:text-sm transition-all duration-200 bg-studio-lilac text-studio-slate-deep rounded-bl-none border-2 border-studio-slate/40">
+                <div class="flex items-center gap-2 pb-2 mb-2 border-b-2 border-studio-slate/20">
+                  <span class="w-2 h-2 rounded-full bg-studio-slate-deep shrink-0"></span>
+                  <span class="text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-wider text-studio-slate-deep">
+                    AVISO DE RESTRICAO DE TAXA DE PROCESSAMENTO
+                  </span>
+                </div>
+                <p class="font-semibold text-studio-slate-deep leading-relaxed text-xs sm:text-sm">
+                  {{ msg.content }}
+                </p>
               </div>
             } @else {
               <div class="markdown-body max-w-[98%] sm:max-w-[95%] xl:max-w-[92%] rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs leading-relaxed text-xs sm:text-sm transition-all duration-200 bg-white text-studio-slate-deep rounded-bl-none border-2 border-studio-slate/30"

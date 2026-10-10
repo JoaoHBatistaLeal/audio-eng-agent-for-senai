@@ -102,8 +102,10 @@ func NewRateLimitMiddleware(limiter *RateLimiter) func(http.Handler) http.Handle
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := extractClientIP(r)
 			if !limiter.allow(ip) {
+				w.Header().Set("Content-Type", "application/json")
 				w.Header().Set("Retry-After", "60")
-				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"code":429,"message":"taxa de processamento excedida"}`))
 				return
 			}
 			next.ServeHTTP(w, r)

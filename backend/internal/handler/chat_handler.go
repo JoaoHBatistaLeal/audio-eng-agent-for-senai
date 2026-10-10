@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -60,16 +61,20 @@ func (h *ChatHandler) StreamHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-
 	messages := h.contextBuilder.BuildConversation(req.Prompt, req.History)
 
 	ctx := r.Context()
 
+	var flusherStarted bool
 	err := h.groqClient.StreamCompletion(ctx, messages, func(token string) error {
+		if !flusherStarted {
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Connection", "keep-alive")
+			w.Header().Set("X-Accel-Buffering", "no")
+			flusherStarted = true
+		}
+
 		payload, err := json.Marshal(ChatStreamResponseToken{Text: token})
 		if err != nil {
 			return err
@@ -85,9 +90,38 @@ func (h *ChatHandler) StreamHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		errPayload, _ := json.Marshal(map[string]string{"error": err.Error()})
-		fmt.Fprintf(w, "data: %s\n\n", string(errPayload))
-		flusher.Flush()
+		var rateLimitErr *service.RateLimitError
+		if errors.As(err, &rateLimitErr) {
+			if !flusherStarted {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Retry-After", "60")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"code":    429,
+					"message": "taxa de processamento excedida",
+				})
+				return
+			}
+			errPayload, _ := json.Marshal(map[string]any{"code": 429, "error": "taxa de processamento excedida"})
+			fmt.Fprintf(w, "data: %s\n\n", string(errPayload))
+			flusher.Flush()
+		} else {
+			if !flusherStarted {
+				w.Header().Set("Content-Type", "text/event-stream")
+				w.Header().Set("Cache-Control", "no-cache")
+				w.Header().Set("Connection", "keep-alive")
+				w.Header().Set("X-Accel-Buffering", "no")
+				flusherStarted = true
+			}
+			errPayload, _ := json.Marshal(map[string]string{"error": err.Error()})
+			fmt.Fprintf(w, "data: %s\n\n", string(errPayload))
+			flusher.Flush()
+		}
+	} else if !flusherStarted {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
 	}
 
 	fmt.Fprintf(w, "data: [DONE]\n\n")

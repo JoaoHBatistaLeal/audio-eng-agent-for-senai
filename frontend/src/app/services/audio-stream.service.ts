@@ -5,6 +5,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  isRateLimitNotice?: boolean;
 }
 
 export interface ChatSession {
@@ -31,6 +32,8 @@ export class AudioStreamService {
   readonly isStreaming = signal<boolean>(false);
   readonly currentStreamingText = signal<string>('');
   readonly errorState = signal<string | null>(null);
+  readonly rateLimitCooldown = signal<number>(0);
+  private cooldownInterval: any = null;
 
   constructor() {
     this.restoreSessionsFromStorage();
@@ -171,9 +174,49 @@ export class AudioStreamService {
     this.createEphemeralSession();
   }
 
+  startRateLimitCooldown(seconds: number = 60): void {
+    if (this.cooldownInterval) {
+      clearInterval(this.cooldownInterval);
+    }
+    this.rateLimitCooldown.set(seconds);
+    this.cooldownInterval = setInterval(() => {
+      const remaining = this.rateLimitCooldown() - 1;
+      if (remaining <= 0) {
+        clearInterval(this.cooldownInterval);
+        this.cooldownInterval = null;
+        this.rateLimitCooldown.set(0);
+      } else {
+        this.rateLimitCooldown.set(remaining);
+      }
+    }, 1000);
+  }
+
+  private triggerRateLimitNotice(activeId: string): void {
+    this.startRateLimitCooldown(60);
+    this.errorState.set(null);
+    const notice: ChatMessage = {
+      role: 'assistant',
+      content: 'TAXA DE PROCESSAMENTO TEMPORARIAMENTE EXCEDIDA: O volume de consultas atingiu o limite de requisições por minuto do motor de inferência. O canal de streaming requer uma pausa de calibragem de 60 segundos antes de processar novas diretrizes acústicas.',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      isRateLimitNotice: true
+    };
+
+    const finalMessages = [...this.messages(), notice];
+    this.messages.set(finalMessages);
+
+    const updatedSessions = this.sessions().map(s => {
+      if (s.id === activeId) {
+        return { ...s, messages: finalMessages };
+      }
+      return s;
+    });
+    this.sessions.set(updatedSessions);
+    this.persistSessions(updatedSessions);
+  }
+
   async sendMessage(prompt: string): Promise<void> {
     const trimmed = prompt.trim();
-    if (!trimmed || this.isStreaming()) {
+    if (!trimmed || this.isStreaming() || this.rateLimitCooldown() > 0) {
       return;
     }
 
@@ -235,6 +278,10 @@ export class AudioStreamService {
       });
 
       if (!response.ok || !response.body) {
+        if (response.status === 429) {
+          this.triggerRateLimitNotice(activeId);
+          return;
+        }
         throw new Error(`Falha na resposta do servidor: status ${response.status}`);
       }
 
@@ -268,6 +315,10 @@ export class AudioStreamService {
             try {
               const parsed = JSON.parse(dataStr);
               if (parsed.error) {
+                if (parsed.code === 429 || String(parsed.error).includes('429') || String(parsed.error).includes('taxa de processamento')) {
+                  this.triggerRateLimitNotice(activeId);
+                  return;
+                }
                 this.errorState.set(parsed.error);
                 continue;
               }
@@ -306,8 +357,10 @@ export class AudioStreamService {
         this.persistSessions(finalizedSessions);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro na comunicacao com o servidor';
-      this.errorState.set(message);
+      if (this.rateLimitCooldown() === 0) {
+        const message = err instanceof Error ? err.message : 'Erro na comunicacao com o servidor';
+        this.errorState.set(message);
+      }
     } finally {
       this.isStreaming.set(false);
       this.currentStreamingText.set('');

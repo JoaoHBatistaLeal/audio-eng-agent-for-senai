@@ -13,11 +13,11 @@ import { AudioStreamService } from '../../services/audio-stream.service';
         <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-studio-slate-dark shrink-0">
           ATALHOS RAPIDOS:
         </span>
-        @for (suggestion of studioSuggestions; track suggestion) {
+            @for (suggestion of studioSuggestions; track suggestion) {
           <button
             type="button"
             (click)="selectSuggestion(suggestion)"
-            [disabled]="audioService.isStreaming()"
+            [disabled]="audioService.isStreaming() || audioService.rateLimitCooldown() > 0"
             class="px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-white border border-studio-slate/35 text-studio-slate-deep hover:bg-studio-lilac hover:border-studio-slate-deep active:translate-y-0 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs">
             {{ suggestion }}
           </button>
@@ -32,7 +32,7 @@ import { AudioStreamService } from '../../services/audio-stream.service';
               name="prompt"
               (keydown.enter)="handleEnter($event)"
               rows="2"
-              [disabled]="audioService.isStreaming()"
+              [disabled]="audioService.isStreaming() || audioService.rateLimitCooldown() > 0"
               placeholder="Descreva o conflito de frequencias, cadeia de equalizacao ou patch de sintese..."
               class="flex-1 bg-transparent resize-none border-0 text-xs sm:text-sm font-semibold text-studio-slate-deep placeholder-studio-slate-dark/70 focus:outline-none p-1.5 sm:p-2 leading-relaxed disabled:opacity-50">
             </textarea>
@@ -40,15 +40,25 @@ import { AudioStreamService } from '../../services/audio-stream.service';
             <div class="flex justify-end sm:flex-col sm:justify-end items-end gap-2 shrink-0">
               <button
                 type="submit"
-                [disabled]="audioService.isStreaming() || !promptText.trim()"
+                [disabled]="audioService.isStreaming() || audioService.rateLimitCooldown() > 0 || !promptText.trim()"
                 class="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white bg-studio-slate-deep shadow-md hover:bg-studio-slate-dark active:translate-y-0 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed">
-                {{ audioService.isStreaming() ? 'PROCESSANDO' : 'TRANSMITIR' }}
+                @if (audioService.rateLimitCooldown() > 0) {
+                  AGUARDE ({{ audioService.rateLimitCooldown() }}S)
+                } @else if (audioService.isStreaming()) {
+                  PROCESSANDO
+                } @else {
+                  TRANSMITIR
+                }
               </button>
             </div>
           </div>
 
           <div class="mt-2 sm:mt-2.5 pt-2 border-t-2 border-studio-slate/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-[10px] sm:text-[11px] font-bold text-studio-slate-deep">
-            <span>Enter para enviar, Shift+Enter para quebra</span>
+            @if (audioService.rateLimitCooldown() > 0) {
+              <span class="font-mono font-black text-studio-slate-deep">PAUSA DE CALIBRAGEM: LIBERACAO EM {{ audioService.rateLimitCooldown() }}S</span>
+            } @else {
+              <span>Enter para enviar, Shift+Enter para quebra</span>
+            }
             <span class="font-mono font-black">CANAL STREAMING DIRETO</span>
           </div>
         </div>
@@ -70,7 +80,7 @@ export class PromptInputComponent {
   ];
 
   selectSuggestion(suggestion: string): void {
-    if (this.audioService.isStreaming()) {
+    if (this.audioService.isStreaming() || this.audioService.rateLimitCooldown() > 0) {
       return;
     }
     this.audioService.sendMessage(suggestion);
@@ -78,7 +88,7 @@ export class PromptInputComponent {
 
   submitPrompt(): void {
     const text = this.promptText.trim();
-    if (!text || this.audioService.isStreaming()) {
+    if (!text || this.audioService.isStreaming() || this.audioService.rateLimitCooldown() > 0) {
       return;
     }
     this.audioService.sendMessage(text);
@@ -89,7 +99,9 @@ export class PromptInputComponent {
     const keyboardEvent = event as KeyboardEvent;
     if (!keyboardEvent.shiftKey) {
       keyboardEvent.preventDefault();
-      this.submitPrompt();
+      if (!this.audioService.isStreaming() && this.audioService.rateLimitCooldown() === 0 && this.promptText.trim()) {
+        this.submitPrompt();
+      }
     }
   }
 }

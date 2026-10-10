@@ -38,6 +38,14 @@ type StreamResponseChunk struct {
 	Choices []StreamChoice `json:"choices"`
 }
 
+type RateLimitError struct {
+	Message string
+}
+
+func (e *RateLimitError) Error() string {
+	return e.Message
+}
+
 type GroqClient struct {
 	apiKey     string
 	model      string
@@ -89,6 +97,9 @@ func (c *GroqClient) StreamCompletion(ctx context.Context, messages []ChatMessag
 
 	if resp.StatusCode != http.StatusOK {
 		respBytes, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode == http.StatusTooManyRequests || strings.Contains(string(respBytes), "rate_limit") || strings.Contains(string(respBytes), "429") {
+			return &RateLimitError{Message: "taxa de processamento excedida"}
+		}
 		return fmt.Errorf("groq api error %d: %s", resp.StatusCode, string(respBytes))
 	}
 
