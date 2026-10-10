@@ -8,66 +8,60 @@ import { AudioStreamService } from '../../services/audio-stream.service';
   imports: [CommonModule],
   template: `
     <aside class="w-full lg:w-80 flex flex-col gap-4">
-      <div class="rounded-2xl border-2 border-studio-slate/40 bg-white p-5 shadow-[0_12px_40px_0_rgba(26,31,44,0.08)]">
-        <div class="flex items-center justify-between pb-3 border-b-2 border-studio-slate/25">
-          <span class="text-xs font-black uppercase tracking-wider text-studio-slate-deep">STATUS DO SISTEMA</span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-black border-2"
-            [ngClass]="audioService.isStreaming() ? 'bg-studio-slate-deep text-white border-studio-slate-deep animate-pulse' : 'bg-studio-lilac text-studio-slate-deep border-studio-slate/40'">
-            <span class="w-2 h-2 rounded-full"
-              [ngClass]="audioService.isStreaming() ? 'bg-white' : 'bg-studio-slate-deep'"></span>
-            {{ audioService.isStreaming() ? 'STREAMING' : 'ONLINE' }}
+      <div class="rounded-2xl border-2 border-studio-slate/40 bg-white p-4 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b-2 border-studio-slate/20">
+          <span class="text-xs font-black uppercase tracking-wider text-studio-slate-deep">SESSOES DE ESTUDIO</span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-studio-lilac text-studio-slate-deep border border-studio-slate/30">
+            {{ audioService.sessions().length }}
           </span>
         </div>
 
-        <div class="mt-4 space-y-3">
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-studio-slate-dark font-bold">MOTOR IA</span>
-            <span class="font-mono font-black text-studio-slate-deep">GROQ ENGINE</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-studio-slate-dark font-bold">LATENCIA PRIMEIRO TOKEN</span>
-            <span class="font-mono font-black text-studio-slate-deep">{{ audioService.latencyMs() }} ms</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-studio-slate-dark font-bold">MODO DE PROCESSAMENTO</span>
-            <span class="font-mono font-black text-studio-slate-deep">STREAMING SSE</span>
-          </div>
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-studio-slate-dark font-bold">MENSAGENS NA SESSAO</span>
-            <span class="font-mono font-black text-studio-slate-deep">{{ audioService.messages().length }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="rounded-2xl border-2 border-studio-slate/30 bg-white p-5 shadow-[0_12px_40px_0_rgba(26,31,44,0.08)]">
-        <span class="text-xs font-black uppercase tracking-wider text-studio-slate-deep block pb-2 border-b-2 border-studio-slate/20">
-          ESPECIFICACOES DE CALIBRACAO
-        </span>
-        <div class="mt-3 space-y-2.5 text-xs">
-          <div class="p-3 rounded-xl bg-studio-canvas border-2 border-studio-slate/25 shadow-sm">
-            <div class="font-black text-studio-slate-deep">EQUALIZACAO CIRURGICA</div>
-            <div class="text-[11px] font-semibold text-studio-slate-dark mt-0.5 leading-snug">Foco em Q estreito, curvas notch e cortes subtrativos precisos.</div>
-          </div>
-          <div class="p-3 rounded-xl bg-studio-canvas border-2 border-studio-slate/25 shadow-sm">
-            <div class="font-black text-studio-slate-deep">SINTESE MODULAR & FM</div>
-            <div class="text-[11px] font-semibold text-studio-slate-dark mt-0.5 leading-snug">Topologia de osciladores, envelopes ADSR e moduladores em ms.</div>
-          </div>
-          <div class="p-3 rounded-xl bg-studio-canvas border-2 border-studio-slate/25 shadow-sm">
-            <div class="font-black text-studio-slate-deep">REFERENCIA HISTORICA</div>
-            <div class="text-[11px] font-semibold text-studio-slate-dark mt-0.5 leading-snug">Equipamentos lendarios (Moog, TB-303, DX7, Prophet-5).</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="rounded-2xl border-2 border-studio-slate/35 bg-white p-4 shadow-sm flex items-center justify-between">
-        <span class="text-xs font-black text-studio-slate-deep">HISTORICO DE DIALOGO</span>
         <button
           type="button"
-          (click)="audioService.clearHistory()"
-          [disabled]="audioService.isStreaming() || audioService.messages().length === 0"
-          class="px-4 py-2 rounded-xl text-xs font-black tracking-wide uppercase transition-all duration-300 border-2 border-studio-slate-deep text-studio-slate-deep hover:bg-studio-slate-deep hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
-          LIMPAR CONSOLE
+          (click)="audioService.startNewSession()"
+          [disabled]="audioService.isStreaming()"
+          class="mt-3 w-full py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-studio-slate-deep hover:bg-studio-slate-dark active:translate-y-0 transition-all duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed text-center">
+          NOVA SESSAO
         </button>
+
+        <div class="mt-4 flex flex-col gap-1.5 max-h-[460px] overflow-y-auto pr-1">
+          @for (session of audioService.sessions(); track session.id) {
+            <div
+              (click)="audioService.selectSession(session.id)"
+              class="group relative flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all duration-200"
+              [ngClass]="audioService.currentSessionId() === session.id
+                ? 'bg-studio-lilac border-studio-slate-deep shadow-sm text-studio-slate-deep'
+                : 'bg-studio-canvas border-studio-slate/25 hover:border-studio-slate hover:bg-white text-studio-slate-dark'">
+              <div class="flex flex-col min-w-0 pr-2">
+                <span class="text-xs font-bold truncate">
+                  {{ session.title }}
+                </span>
+                <span class="text-[10px] font-mono mt-0.5 opacity-75">
+                  {{ session.createdAt }} | {{ session.messages.length }} msgs
+                </span>
+              </div>
+
+              <button
+                type="button"
+                (click)="audioService.deleteSession(session.id, $event)"
+                [disabled]="audioService.isStreaming()"
+                title="Excluir sessao"
+                class="shrink-0 px-2 py-0.5 rounded text-[10px] font-mono font-bold border border-studio-slate/40 text-studio-slate-dark hover:bg-studio-slate-deep hover:text-white transition-colors duration-150">
+                DEL
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="mt-4 pt-3 border-t-2 border-studio-slate/20">
+          <button
+            type="button"
+            (click)="audioService.clearAllHistory()"
+            [disabled]="audioService.isStreaming() || audioService.sessions().length === 0"
+            class="w-full py-2 px-3 rounded-xl text-[11px] font-bold uppercase tracking-wider text-studio-slate-dark border-2 border-studio-slate/30 hover:border-red-400 hover:text-red-900 hover:bg-red-50 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed text-center">
+            LIMPAR HISTORICO
+          </button>
+        </div>
       </div>
     </aside>
   `

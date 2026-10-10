@@ -6,17 +6,117 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  messages: ChatMessage[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AudioStreamService {
   private readonly apiUrl = 'http://localhost:8080/api/chat/stream';
+  private readonly storageKey = 'senai_audio_sessions_v1';
 
+  readonly sessions = signal<ChatSession[]>([]);
+  readonly currentSessionId = signal<string>('');
   readonly messages = signal<ChatMessage[]>([]);
   readonly isStreaming = signal<boolean>(false);
   readonly currentStreamingText = signal<string>('');
-  readonly latencyMs = signal<number>(0);
   readonly errorState = signal<string | null>(null);
+
+  constructor() {
+    this.restoreSessionsFromStorage();
+  }
+
+  private restoreSessionsFromStorage(): void {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      if (stored) {
+        const parsed: ChatSession[] = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.sessions.set(parsed);
+          this.selectSession(parsed[0].id);
+          return;
+        }
+      }
+    } catch {
+      localStorage.removeItem(this.storageKey);
+    }
+    this.startNewSession();
+  }
+
+  private persistSessions(): void {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.sessions()));
+    } catch {}
+  }
+
+  startNewSession(): void {
+    if (this.isStreaming()) {
+      return;
+    }
+
+    const newId = 'session_' + Date.now();
+    const newSession: ChatSession = {
+      id: newId,
+      title: 'Nova Sessao',
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      messages: []
+    };
+
+    this.sessions.set([newSession, ...this.sessions()]);
+    this.currentSessionId.set(newId);
+    this.messages.set([]);
+    this.errorState.set(null);
+    this.currentStreamingText.set('');
+    this.persistSessions();
+  }
+
+  selectSession(sessionId: string): void {
+    if (this.isStreaming() || this.currentSessionId() === sessionId) {
+      return;
+    }
+
+    const target = this.sessions().find(s => s.id === sessionId);
+    if (target) {
+      this.currentSessionId.set(target.id);
+      this.messages.set(target.messages);
+      this.errorState.set(null);
+      this.currentStreamingText.set('');
+    }
+  }
+
+  deleteSession(sessionId: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (this.isStreaming()) {
+      return;
+    }
+
+    const remaining = this.sessions().filter(s => s.id !== sessionId);
+    this.sessions.set(remaining);
+    this.persistSessions();
+
+    if (remaining.length === 0) {
+      this.startNewSession();
+    } else if (this.currentSessionId() === sessionId) {
+      this.selectSession(remaining[0].id);
+    }
+  }
+
+  clearAllHistory(): void {
+    if (this.isStreaming()) {
+      return;
+    }
+
+    localStorage.removeItem(this.storageKey);
+    this.sessions.set([]);
+    this.startNewSession();
+  }
 
   async sendMessage(prompt: string): Promise<void> {
     const trimmed = prompt.trim();
@@ -32,12 +132,33 @@ export class AudioStreamService {
     };
 
     const currentHistory = this.messages();
-    this.messages.set([...currentHistory, userMessage]);
+    const updatedMessagesWithUser = [...currentHistory, userMessage];
+    this.messages.set(updatedMessagesWithUser);
     this.isStreaming.set(true);
     this.currentStreamingText.set('');
 
-    const startTime = performance.now();
-    let firstTokenReceived = false;
+    const activeId = this.currentSessionId();
+    let currentSession = this.sessions().find(s => s.id === activeId);
+
+    if (currentSession && (currentSession.title === 'Nova Sessao' || currentSession.messages.length === 0)) {
+      const generatedTitle = trimmed.length > 32 ? trimmed.substring(0, 32) + '...' : trimmed;
+      const updatedSessions = this.sessions().map(s => {
+        if (s.id === activeId) {
+          return { ...s, title: generatedTitle, messages: updatedMessagesWithUser };
+        }
+        return s;
+      });
+      this.sessions.set(updatedSessions);
+    } else {
+      const updatedSessions = this.sessions().map(s => {
+        if (s.id === activeId) {
+          return { ...s, messages: updatedMessagesWithUser };
+        }
+        return s;
+      });
+      this.sessions.set(updatedSessions);
+    }
+    this.persistSessions();
 
     try {
       const response = await fetch(this.apiUrl, {
@@ -91,10 +212,6 @@ export class AudioStreamService {
               }
 
               if (parsed.text) {
-                if (!firstTokenReceived) {
-                  this.latencyMs.set(Math.round(performance.now() - startTime));
-                  firstTokenReceived = true;
-                }
                 accumulatedText += parsed.text;
                 this.currentStreamingText.set(accumulatedText);
               }
@@ -111,7 +228,17 @@ export class AudioStreamService {
           content: accumulatedText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
         };
-        this.messages.set([...this.messages(), assistantMessage]);
+        const finalMessages = [...this.messages(), assistantMessage];
+        this.messages.set(finalMessages);
+
+        const updatedSessions = this.sessions().map(s => {
+          if (s.id === activeId) {
+            return { ...s, messages: finalMessages };
+          }
+          return s;
+        });
+        this.sessions.set(updatedSessions);
+        this.persistSessions();
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro na comunicacao com o servidor';
@@ -119,14 +246,6 @@ export class AudioStreamService {
     } finally {
       this.isStreaming.set(false);
       this.currentStreamingText.set('');
-    }
-  }
-
-  clearHistory(): void {
-    if (!this.isStreaming()) {
-      this.messages.set([]);
-      this.errorState.set(null);
-      this.latencyMs.set(0);
     }
   }
 }
