@@ -15,6 +15,7 @@ type Config struct {
 
 func LoadConfig() Config {
 	loadDotEnv(".env")
+	loadDotEnv("../.env")
 	loadDotEnv("../../.env")
 
 	port := os.Getenv("PORT")
