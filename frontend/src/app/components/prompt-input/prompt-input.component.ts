@@ -9,7 +9,7 @@ import { AudioStreamService } from '../../services/audio-stream.service';
   imports: [CommonModule, FormsModule],
   template: `
     <form (ngSubmit)="submitPrompt()" class="w-full">
-      <div class="rounded-2xl border border-studio-slate/30 bg-studio-canvas/90 p-3 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(136,149,179,0.18)] transition-all duration-300 focus-within:ring-2 focus-within:ring-studio-slate/50 focus-within:shadow-[0_0_15px_rgba(136,149,179,0.25)]">
+      <div class="rounded-2xl border-2 border-studio-slate/40 bg-studio-canvas p-4 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(136,149,179,0.25)] transition-all duration-300 focus-within:border-studio-slate focus-within:ring-2 focus-within:ring-studio-slate/60 focus-within:shadow-[0_0_20px_rgba(136,149,179,0.35)]">
         <div class="flex flex-col sm:flex-row gap-3">
           <textarea
             [(ngModel)]="promptText"
@@ -18,22 +18,22 @@ import { AudioStreamService } from '../../services/audio-stream.service';
             rows="2"
             [disabled]="audioService.isStreaming()"
             placeholder="Descreva o problema de equalizacao, arquitetura de patch de sintetizador ou consulta acustica..."
-            class="flex-1 bg-transparent resize-none border-0 text-sm text-studio-slate placeholder-studio-slate/50 focus:outline-none p-2 leading-relaxed disabled:opacity-50">
+            class="flex-1 bg-transparent resize-none border-0 text-sm font-medium text-studio-slate placeholder-studio-slate/65 focus:outline-none p-2 leading-relaxed disabled:opacity-50">
           </textarea>
 
           <div class="flex sm:flex-col justify-end items-end gap-2 shrink-0">
             <button
               type="submit"
               [disabled]="audioService.isStreaming() || !promptText.trim()"
-              class="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-studio-canvas bg-gradient-to-r from-studio-slate to-studio-slate/85 shadow-[0_4px_16px_rgba(136,149,179,0.3)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-40 disabled:hover:translate-y-0 disabled:cursor-not-allowed">
+              class="px-7 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-studio-canvas bg-studio-slate shadow-[0_4px_16px_rgba(136,149,179,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 disabled:opacity-40 disabled:hover:translate-y-0 disabled:cursor-not-allowed">
               {{ audioService.isStreaming() ? 'PROCESSANDO' : 'TRANSMITIR' }}
             </button>
           </div>
         </div>
 
-        <div class="mt-2 pt-2 border-t border-studio-slate/10 flex items-center justify-between text-[11px] text-studio-slate/70">
+        <div class="mt-2.5 pt-2.5 border-t-2 border-studio-slate/15 flex items-center justify-between text-[11px] font-semibold text-studio-slate">
           <span>Pressione Enter para enviar, Shift+Enter para nova linha</span>
-          <span class="font-mono">COMUNICACAO DIRETA TLS 1.3</span>
+          <span class="font-mono font-bold">COMUNICACAO DIRETA TLS 1.3</span>
         </div>
       </div>
     </form>
