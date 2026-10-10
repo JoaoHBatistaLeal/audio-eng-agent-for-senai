@@ -19,6 +19,7 @@ export interface ChatSession {
 export class AudioStreamService {
   private readonly apiUrl = 'http://localhost:8080/api/chat/stream';
   private readonly storageKey = 'senai_audio_sessions_v1';
+  private readonly maxSessions = 10;
 
   readonly sessions = signal<ChatSession[]>([]);
   readonly currentSessionId = signal<string>('');
@@ -36,26 +37,75 @@ export class AudioStreamService {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
         const parsed: ChatSession[] = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          this.sessions.set(parsed);
-          this.selectSession(parsed[0].id);
-          return;
+        if (Array.isArray(parsed)) {
+          const validSessions = parsed
+            .filter(s => Array.isArray(s.messages) && s.messages.length > 0)
+            .slice(0, this.maxSessions);
+
+          if (validSessions.length > 0) {
+            this.sessions.set(validSessions);
+            this.persistSessions(validSessions);
+            this.selectSession(validSessions[0].id);
+            return;
+          }
         }
       }
     } catch {
       localStorage.removeItem(this.storageKey);
     }
-    this.startNewSession();
+
+    localStorage.removeItem(this.storageKey);
+    this.createEphemeralSession();
   }
 
-  private persistSessions(): void {
+  private persistSessions(sessionsToSave?: ChatSession[]): void {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.sessions()));
+      const target = sessionsToSave ?? this.sessions();
+      const valid = target
+        .filter(s => s.messages && s.messages.length > 0)
+        .slice(0, this.maxSessions);
+
+      if (valid.length > 0) {
+        localStorage.setItem(this.storageKey, JSON.stringify(valid));
+      } else {
+        localStorage.removeItem(this.storageKey);
+      }
     } catch {}
+  }
+
+  private createEphemeralSession(): void {
+    const newId = 'session_' + Date.now();
+    const newSession: ChatSession = {
+      id: newId,
+      title: 'Nova Sessao',
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      messages: []
+    };
+
+    this.sessions.set([newSession]);
+    this.currentSessionId.set(newId);
+    this.messages.set([]);
+    this.errorState.set(null);
+    this.currentStreamingText.set('');
   }
 
   startNewSession(): void {
     if (this.isStreaming()) {
+      return;
+    }
+
+    const currentId = this.currentSessionId();
+    const active = this.sessions().find(s => s.id === currentId);
+    if (active && active.messages.length === 0) {
+      this.messages.set([]);
+      this.errorState.set(null);
+      this.currentStreamingText.set('');
+      return;
+    }
+
+    const existingBlank = this.sessions().find(s => s.messages.length === 0);
+    if (existingBlank) {
+      this.selectSession(existingBlank.id);
       return;
     }
 
@@ -67,12 +117,12 @@ export class AudioStreamService {
       messages: []
     };
 
-    this.sessions.set([newSession, ...this.sessions()]);
+    const updated = [newSession, ...this.sessions()].slice(0, this.maxSessions);
+    this.sessions.set(updated);
     this.currentSessionId.set(newId);
     this.messages.set([]);
     this.errorState.set(null);
     this.currentStreamingText.set('');
-    this.persistSessions();
   }
 
   selectSession(sessionId: string): void {
@@ -99,10 +149,10 @@ export class AudioStreamService {
 
     const remaining = this.sessions().filter(s => s.id !== sessionId);
     this.sessions.set(remaining);
-    this.persistSessions();
+    this.persistSessions(remaining);
 
     if (remaining.length === 0) {
-      this.startNewSession();
+      this.createEphemeralSession();
     } else if (this.currentSessionId() === sessionId) {
       this.selectSession(remaining[0].id);
     }
@@ -114,8 +164,7 @@ export class AudioStreamService {
     }
 
     localStorage.removeItem(this.storageKey);
-    this.sessions.set([]);
-    this.startNewSession();
+    this.createEphemeralSession();
   }
 
   async sendMessage(prompt: string): Promise<void> {
@@ -138,27 +187,35 @@ export class AudioStreamService {
     this.currentStreamingText.set('');
 
     const activeId = this.currentSessionId();
-    let currentSession = this.sessions().find(s => s.id === activeId);
+    const currentSession = this.sessions().find(s => s.id === activeId);
 
-    if (currentSession && (currentSession.title === 'Nova Sessao' || currentSession.messages.length === 0)) {
-      const generatedTitle = trimmed.length > 32 ? trimmed.substring(0, 32) + '...' : trimmed;
-      const updatedSessions = this.sessions().map(s => {
-        if (s.id === activeId) {
-          return { ...s, title: generatedTitle, messages: updatedMessagesWithUser };
-        }
-        return s;
-      });
-      this.sessions.set(updatedSessions);
-    } else {
-      const updatedSessions = this.sessions().map(s => {
-        if (s.id === activeId) {
-          return { ...s, messages: updatedMessagesWithUser };
-        }
-        return s;
-      });
-      this.sessions.set(updatedSessions);
+    const generatedTitle = currentSession && (currentSession.title === 'Nova Sessao' || currentSession.messages.length === 0)
+      ? (trimmed.length > 32 ? trimmed.substring(0, 32) + '...' : trimmed)
+      : (currentSession ? currentSession.title : 'Nova Sessao');
+
+    let updatedSessions = this.sessions().map(s => {
+      if (s.id === activeId) {
+        return { ...s, title: generatedTitle, messages: updatedMessagesWithUser };
+      }
+      return s;
+    });
+
+    if (!updatedSessions.some(s => s.id === activeId)) {
+      const newEntry: ChatSession = {
+        id: activeId,
+        title: generatedTitle,
+        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        messages: updatedMessagesWithUser
+      };
+      updatedSessions = [newEntry, ...updatedSessions];
     }
-    this.persistSessions();
+
+    updatedSessions = updatedSessions
+      .filter(s => s.id === activeId || s.messages.length > 0)
+      .slice(0, this.maxSessions);
+
+    this.sessions.set(updatedSessions);
+    this.persistSessions(updatedSessions);
 
     try {
       const response = await fetch(this.apiUrl, {
@@ -231,14 +288,18 @@ export class AudioStreamService {
         const finalMessages = [...this.messages(), assistantMessage];
         this.messages.set(finalMessages);
 
-        const updatedSessions = this.sessions().map(s => {
-          if (s.id === activeId) {
-            return { ...s, messages: finalMessages };
-          }
-          return s;
-        });
-        this.sessions.set(updatedSessions);
-        this.persistSessions();
+        const finalizedSessions = this.sessions()
+          .map(s => {
+            if (s.id === activeId) {
+              return { ...s, messages: finalMessages };
+            }
+            return s;
+          })
+          .filter(s => s.messages.length > 0)
+          .slice(0, this.maxSessions);
+
+        this.sessions.set(finalizedSessions);
+        this.persistSessions(finalizedSessions);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro na comunicacao com o servidor';
