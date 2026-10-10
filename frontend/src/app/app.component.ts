@@ -9,26 +9,26 @@ import { PromptInputComponent } from './components/prompt-input/prompt-input.com
   standalone: true,
   imports: [CommonModule, ChatConsoleComponent, ParameterDeckComponent, PromptInputComponent],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-studio-canvas via-studio-lilac to-studio-bone text-studio-slate flex flex-col">
-      <header class="w-full border-b-2 border-studio-slate/30 bg-studio-lilac/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+    <div class="min-h-screen bg-studio-canvas text-studio-slate-deep flex flex-col font-sans">
+      <header class="w-full border-b-2 border-studio-slate/30 bg-white/95 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-3">
-              <span class="w-3.5 h-3.5 rounded-sm bg-studio-slate"></span>
-              <h1 class="text-base font-black uppercase tracking-widest text-studio-slate">
+              <span class="w-3.5 h-3.5 rounded-sm bg-studio-slate-deep"></span>
+              <h1 class="text-base font-black uppercase tracking-widest text-studio-slate-deep">
                 CONSOLE DE ENGENHARIA DE AUDIO SENAI
               </h1>
             </div>
-            <p class="text-xs font-semibold text-studio-slate mt-0.5">
+            <p class="text-xs font-bold text-studio-slate-dark mt-0.5">
               SISTEMA CONSULTOR EM ACUSTICA, EQUALIZACAO E SINTESE SONORA
             </p>
           </div>
 
           <div class="flex items-center gap-2">
-            <span class="px-3.5 py-1.5 rounded-lg bg-studio-cream border-2 border-studio-slate/25 text-[11px] font-mono font-bold text-studio-slate">
+            <span class="px-3.5 py-1.5 rounded-lg bg-studio-lilac border-2 border-studio-slate/30 text-[11px] font-mono font-black text-studio-slate-deep">
               TERMINAL 1.0
             </span>
-            <span class="px-3.5 py-1.5 rounded-lg bg-studio-canvas border-2 border-studio-slate text-[11px] font-mono text-studio-slate font-black">
+            <span class="px-3.5 py-1.5 rounded-lg bg-white border-2 border-studio-slate-deep text-[11px] font-mono text-studio-slate-deep font-black">
               ESTUDIO SENAI
             </span>
           </div>
@@ -43,8 +43,8 @@ import { PromptInputComponent } from './components/prompt-input/prompt-input.com
         <app-parameter-deck></app-parameter-deck>
       </main>
 
-      <footer class="w-full border-t-2 border-studio-slate/20 bg-studio-canvas/80 backdrop-blur-sm py-4">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold text-studio-slate">
+      <footer class="w-full border-t-2 border-studio-slate/25 bg-white py-4 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-black text-studio-slate-deep">
           <span>DESENVOLVIDO PARA O SENAI - PLATAFORMA DE PRECISAO SONORA</span>
           <span class="font-mono font-black">COMUNICACAO STREAMING SSE NATIVA</span>
         </div>
