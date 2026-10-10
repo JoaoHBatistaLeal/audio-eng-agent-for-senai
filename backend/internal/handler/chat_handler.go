@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"backend/internal/service"
 )
@@ -48,8 +49,14 @@ func (h *ChatHandler) StreamHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Prompt == "" {
+	trimmedPrompt := strings.TrimSpace(req.Prompt)
+	if trimmedPrompt == "" {
 		http.Error(w, "prompt cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if len([]rune(req.Prompt)) > 1000 {
+		http.Error(w, "prompt exceeds maximum length of 1000 characters", http.StatusBadRequest)
 		return
 	}
 

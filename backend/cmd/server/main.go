@@ -24,11 +24,16 @@ func main() {
 
 	chatHandler := handler.NewChatHandler(groqClient, audioBuilder)
 
-	mux := http.NewServeMux()
+	chatMux := http.NewServeMux()
+	chatMux.HandleFunc("POST /api/chat/stream", chatHandler.StreamHandler)
+	chatMux.HandleFunc("POST /api/v1/chat", chatHandler.StreamHandler)
 
+	rateLimiter := middleware.NewRateLimiter(10.0, 10.0)
+	rateLimitedChatHandler := middleware.NewRateLimitMiddleware(rateLimiter)(chatMux)
+
+	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handler.HealthHandler)
-	mux.HandleFunc("POST /api/chat/stream", chatHandler.StreamHandler)
-	mux.HandleFunc("POST /api/v1/chat", chatHandler.StreamHandler)
+	mux.Handle("/api/", rateLimitedChatHandler)
 
 	corsMiddleware := middleware.NewCORSMiddleware(cfg.AllowedOrigin)
 	serverHandler := corsMiddleware(mux)
