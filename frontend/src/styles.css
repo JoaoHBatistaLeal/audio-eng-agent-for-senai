@@ -115,3 +115,43 @@
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
 }
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.markdown-body .table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(136, 149, 179, 0.35);
+}
+
+.markdown-body th {
+  background-color: #f8f1ff;
+  border-bottom: 2px solid #8895b3;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  text-align: left;
+  color: #1a1f2c;
+  letter-spacing: 0.025em;
+}
+
+.markdown-body td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(136, 149, 179, 0.2);
+  vertical-align: top;
+  color: #2c3345;
+}
+
+.markdown-body tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.markdown-body tbody tr:hover {
+  background-color: rgba(248, 241, 255, 0.6);
+}

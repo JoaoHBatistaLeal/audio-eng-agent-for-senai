@@ -14,10 +14,12 @@ export class MarkdownToHtmlPipe implements PipeTransform {
       return '';
     }
 
-    const rawHtml = marked.parse(value, {
+    let rawHtml = marked.parse(value, {
       gfm: true,
       breaks: true
     }) as string;
+
+    rawHtml = rawHtml.replace(/<table(\s*|>)/g, '<div class="table-wrapper"><table$1').replace(/<\/table>/g, '</table></div>');
 
     return this.sanitizer.bypassSecurityTrustHtml(rawHtml);
   }
