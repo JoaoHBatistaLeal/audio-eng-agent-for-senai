@@ -1,0 +1,88 @@
+package handler
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"backend/internal/service"
+)
+
+type ChatStreamRequest struct {
+	Prompt   string                `json:"prompt"`
+	History  []service.ChatMessage `json:"history"`
+	SystemID string                `json:"systemId,omitempty"`
+}
+
+type ChatStreamResponseToken struct {
+	Text string `json:"text"`
+}
+
+type ChatHandler struct {
+	groqClient     *service.GroqClient
+	contextBuilder *service.AudioContextBuilder
+}
+
+func NewChatHandler(groqClient *service.GroqClient, contextBuilder *service.AudioContextBuilder) *ChatHandler {
+	return &ChatHandler{
+		groqClient:     groqClient,
+		contextBuilder: contextBuilder,
+	}
+}
+
+func (h *ChatHandler) StreamHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	var req ChatStreamRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Prompt == "" {
+		http.Error(w, "prompt cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
+	messages := h.contextBuilder.BuildConversation(req.Prompt, req.History)
+
+	ctx := r.Context()
+
+	err := h.groqClient.StreamCompletion(ctx, messages, func(token string) error {
+		payload, err := json.Marshal(ChatStreamResponseToken{Text: token})
+		if err != nil {
+			return err
+		}
+
+		_, err = fmt.Fprintf(w, "data: %s\n\n", string(payload))
+		if err != nil {
+			return err
+		}
+
+		flusher.Flush()
+		return nil
+	})
+
+	if err != nil {
+		errPayload, _ := json.Marshal(map[string]string{"error": err.Error()})
+		fmt.Fprintf(w, "data: %s\n\n", string(errPayload))
+		flusher.Flush()
+	}
+
+	fmt.Fprintf(w, "data: [DONE]\n\n")
+	flusher.Flush()
+}
