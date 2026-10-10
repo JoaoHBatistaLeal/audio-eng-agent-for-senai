@@ -23,6 +23,7 @@ type ChatCompletionRequest struct {
 	Messages    []ChatMessage `json:"messages"`
 	Stream      bool          `json:"stream"`
 	Temperature float64       `json:"temperature"`
+	MaxTokens   int           `json:"max_tokens,omitempty"`
 }
 
 type StreamChoiceDelta struct {
@@ -63,6 +64,7 @@ func (c *GroqClient) StreamCompletion(ctx context.Context, messages []ChatMessag
 		Messages:    messages,
 		Stream:      true,
 		Temperature: 0.6,
+		MaxTokens:   2048,
 	}
 
 	jsonBytes, err := json.Marshal(reqBody)

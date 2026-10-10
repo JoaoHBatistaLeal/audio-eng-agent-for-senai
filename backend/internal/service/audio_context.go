@@ -38,7 +38,14 @@ func (b *AudioContextBuilder) BuildConversation(userPrompt string, history []Cha
 		Content: AudioEngineeringSystemPrompt,
 	})
 
-	for _, msg := range history {
+	maxHistory := 4
+	startIndex := 0
+	if len(history) > maxHistory {
+		startIndex = len(history) - maxHistory
+	}
+
+	for i := startIndex; i < len(history); i++ {
+		msg := history[i]
 		if msg.Role == "user" || msg.Role == "assistant" {
 			messages = append(messages, msg)
 		}
