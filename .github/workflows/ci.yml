@@ -1,0 +1,52 @@
+name: CI Build and Validation
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Verify Backend Compilation
+        run: |
+          cd backend
+          go vet ./...
+          CGO_ENABLED=0 go build -v ./cmd/server
+
+  frontend-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build -- --configuration production
+
+  container-build:
+    needs: [backend-validation, frontend-validation]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Backend Docker Image
+        run: docker build -t audio-agent-backend:latest ./backend
+
+      - name: Build Frontend Docker Image
+        run: docker build -t audio-agent-frontend:latest ./frontend
