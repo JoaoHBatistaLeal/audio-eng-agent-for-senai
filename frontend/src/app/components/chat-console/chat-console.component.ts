@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AudioStreamService } from '../../services/audio-stream.service';
+import { MarkdownToHtmlPipe } from '../../pipes/markdown-to-html.pipe';
 
 @Component({
   selector: 'app-chat-console',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MarkdownToHtmlPipe],
   template: `
     <div class="flex-1 flex flex-col min-h-[520px] rounded-3xl border-2 border-studio-slate/40 bg-white shadow-sm overflow-hidden">
       <div class="px-6 py-3.5 border-b-2 border-studio-slate/20 bg-studio-lilac flex items-center justify-between">
@@ -46,12 +47,15 @@ import { AudioStreamService } from '../../services/audio-stream.service';
               <span class="text-[10px] font-mono font-bold text-studio-slate-dark">{{ msg.timestamp }}</span>
             </div>
 
-            <div class="max-w-[88%] rounded-2xl p-5 shadow-xs whitespace-pre-wrap leading-relaxed text-sm transition-all duration-200"
-              [ngClass]="msg.role === 'user'
-                ? 'bg-studio-slate-deep text-white rounded-br-none border-2 border-studio-slate-deep font-medium'
-                : 'bg-white text-studio-slate-deep rounded-bl-none border-2 border-studio-slate/30 font-semibold'">
-              {{ msg.content }}
-            </div>
+            @if (msg.role === 'user') {
+              <div class="max-w-[88%] rounded-2xl p-5 shadow-xs whitespace-pre-wrap leading-relaxed text-sm transition-all duration-200 bg-studio-slate-deep text-white rounded-br-none border-2 border-studio-slate-deep font-medium">
+                {{ msg.content }}
+              </div>
+            } @else {
+              <div class="markdown-body max-w-[88%] rounded-2xl p-5 shadow-xs leading-relaxed text-sm transition-all duration-200 bg-white text-studio-slate-deep rounded-bl-none border-2 border-studio-slate/30"
+                [innerHTML]="msg.content | markdownToHtml">
+              </div>
+            }
           </div>
         }
 
@@ -63,9 +67,8 @@ import { AudioStreamService } from '../../services/audio-stream.service';
               </span>
             </div>
 
-            <div class="max-w-[88%] rounded-2xl p-5 rounded-bl-none border-2 border-studio-slate-dark bg-white text-studio-slate-deep shadow-md whitespace-pre-wrap leading-relaxed text-sm font-semibold">
-              {{ audioService.currentStreamingText() }}
-              <span class="inline-block w-2.5 h-4 ml-1 bg-studio-slate-deep animate-pulse align-middle"></span>
+            <div class="markdown-body max-w-[88%] rounded-2xl p-5 rounded-bl-none border-2 border-studio-slate-dark bg-white text-studio-slate-deep shadow-md leading-relaxed text-sm"
+              [innerHTML]="audioService.currentStreamingText() | markdownToHtml">
             </div>
           </div>
         }
