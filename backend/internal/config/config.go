@@ -27,7 +27,7 @@ func LoadConfig() Config {
 
 	model := os.Getenv("GROQ_MODEL")
 	if model == "" {
-		model = "llama-3.3-70b-versatile"
+		model = "llama-3.1-8b-instant"
 	}
 
 	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
