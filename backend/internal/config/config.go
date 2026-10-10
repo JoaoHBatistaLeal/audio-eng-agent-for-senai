@@ -27,7 +27,7 @@ func LoadConfig() Config {
 
 	model := os.Getenv("GROQ_MODEL")
 	if model == "" {
-		model = "llama-3.1-8b-instant"
+		model = "openai/gpt-oss-120b"
 	}
 
 	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
