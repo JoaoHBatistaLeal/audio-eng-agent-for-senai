@@ -7,7 +7,7 @@ import { AudioStreamService } from '../../services/audio-stream.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <aside class="w-full lg:w-80 flex flex-col gap-4">
+    <aside class="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4">
       <div class="rounded-2xl border-2 border-studio-slate/40 bg-white p-4 shadow-sm flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b-2 border-studio-slate/20">
           <span class="text-xs font-black uppercase tracking-wider text-studio-slate-deep">SESSOES DE ESTUDIO</span>

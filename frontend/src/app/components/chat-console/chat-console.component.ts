@@ -48,11 +48,11 @@ import { MarkdownToHtmlPipe } from '../../pipes/markdown-to-html.pipe';
             </div>
 
             @if (msg.role === 'user') {
-              <div class="max-w-[88%] rounded-2xl p-5 shadow-xs whitespace-pre-wrap leading-relaxed text-sm transition-all duration-200 bg-studio-slate-deep text-white rounded-br-none border-2 border-studio-slate-deep font-medium">
+              <div class="max-w-[94%] xl:max-w-[90%] rounded-2xl p-5 shadow-xs whitespace-pre-wrap leading-relaxed text-sm transition-all duration-200 bg-studio-slate-deep text-white rounded-br-none border-2 border-studio-slate-deep font-medium">
                 {{ msg.content }}
               </div>
             } @else {
-              <div class="markdown-body max-w-[88%] rounded-2xl p-5 shadow-xs leading-relaxed text-sm transition-all duration-200 bg-white text-studio-slate-deep rounded-bl-none border-2 border-studio-slate/30"
+              <div class="markdown-body max-w-[96%] xl:max-w-[94%] rounded-2xl p-5 shadow-xs leading-relaxed text-sm transition-all duration-200 bg-white text-studio-slate-deep rounded-bl-none border-2 border-studio-slate/30"
                 [innerHTML]="msg.content | markdownToHtml">
               </div>
             }
@@ -67,7 +67,7 @@ import { MarkdownToHtmlPipe } from '../../pipes/markdown-to-html.pipe';
               </span>
             </div>
 
-            <div class="markdown-body max-w-[88%] rounded-2xl p-5 rounded-bl-none border-2 border-studio-slate-dark bg-white text-studio-slate-deep shadow-md leading-relaxed text-sm"
+            <div class="markdown-body max-w-[96%] xl:max-w-[94%] rounded-2xl p-5 rounded-bl-none border-2 border-studio-slate-dark bg-white text-studio-slate-deep shadow-md leading-relaxed text-sm"
               [innerHTML]="audioService.currentStreamingText() | markdownToHtml">
             </div>
           </div>

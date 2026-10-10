@@ -11,7 +11,7 @@ import { PromptInputComponent } from './components/prompt-input/prompt-input.com
   template: `
     <div class="min-h-screen bg-studio-canvas text-studio-slate-deep flex flex-col font-sans">
       <header class="w-full border-b-2 border-studio-slate/30 bg-white/95 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="w-full px-4 sm:px-8 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-3">
               <span class="w-3.5 h-3.5 rounded-sm bg-studio-slate-deep"></span>
@@ -35,16 +35,16 @@ import { PromptInputComponent } from './components/prompt-input/prompt-input.com
         </div>
       </header>
 
-      <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8">
-        <div class="flex-1 flex flex-col gap-6">
+      <main class="flex-1 w-full px-4 sm:px-8 py-6 flex flex-col lg:flex-row gap-6">
+        <div class="flex-1 flex flex-col gap-5 min-w-0">
           <app-chat-console></app-chat-console>
           <app-prompt-input></app-prompt-input>
         </div>
         <app-parameter-deck></app-parameter-deck>
       </main>
 
-      <footer class="w-full border-t-2 border-studio-slate/25 bg-white py-4 shadow-sm">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-black text-studio-slate-deep">
+      <footer class="w-full border-t-2 border-studio-slate/25 bg-white py-3 px-4 sm:px-8 shadow-sm">
+        <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-black text-studio-slate-deep">
           <span>DESENVOLVIDO PARA O SENAI - PLATAFORMA DE PRECISAO SONORA</span>
           <span class="font-mono font-black">COMUNICACAO STREAMING SSE NATIVA</span>
         </div>
