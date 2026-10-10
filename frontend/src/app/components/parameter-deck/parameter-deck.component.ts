@@ -22,7 +22,7 @@ import { AudioStreamService } from '../../services/audio-stream.service';
         <div class="mt-4 space-y-3">
           <div class="flex justify-between items-center text-xs">
             <span class="text-studio-slate/80 font-medium">MOTOR IA</span>
-            <span class="font-mono font-bold text-studio-slate">GROQ LLAMA-3.3</span>
+            <span class="font-mono font-bold text-studio-slate">GROQ ENGINE</span>
           </div>
           <div class="flex justify-between items-center text-xs">
             <span class="text-studio-slate/80 font-medium">LATENCIA PRIMEIRO TOKEN</span>
